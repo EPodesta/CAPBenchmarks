@@ -27,11 +27,11 @@ size_t data_get = 0; /* Number of items put.    */
 unsigned nget = 0;        /* Number of items gotten. */
 
 /* Problem sizes */
-struct problem tiny     =  { 8000001, 8004096 };
-struct problem small    =  { 8000001, 8008192 };
-struct problem standard =  { 8000001, 8016384 };
-struct problem large    =  { 8000001, 8032768 };
-struct problem huge     =  { 8000001, 8065536 }; 
+struct problem tiny     =  {   10001,   14096 };
+struct problem small    =  {  100001,  116384 };
+struct problem standard =  {  500001,  532768 };
+struct problem large    =  { 2000001, 2032768 };
+struct problem huge     =  { 8000001, 8065536 };
 
 /* Benchmark parameters. */
 int verbose = 0;   /* Display informations? 	   */
@@ -45,7 +45,7 @@ int main(int argc, const char **argv) {
 	readargs(argc, (char **) argv);
 
 	timer_init();
-	
+
 	startTime = timer_get();
 	int fd = friendly_numbers(prob->start, prob->end);
 	endTime = timer_get();
@@ -55,6 +55,6 @@ int main(int argc, const char **argv) {
 
 	if (verbose)
 		printf("  Friendly Pairs = %d\n", fd);
-	
+
 	return 0;
 }
