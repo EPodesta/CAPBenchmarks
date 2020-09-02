@@ -17,7 +17,7 @@ static mppa_async_segment_t chunks_seg;
 
 /* Gaussian Filter. */
 static unsigned char *img;       /* Input image.                    */
-static unsigned char *newimg;    /* Output image.                   */ 
+static unsigned char *newimg;    /* Output image.                   */
 static int imgsize;              /* Dimension of image.             */
 static double *mask;             /* Mask.                           */
 static int masksize;             /* Dimension of mask.              */
@@ -75,11 +75,11 @@ static void process_chunks() {
 		for (int j = half; j < imgsize - half; j += CHUNK_SIZE) {
 
 			/* Build chunk. */
-			for (int k = 0; k < chunk_with_halo_size; k++) 
+			for (int k = 0; k < chunk_with_halo_size; k++)
 				memcpy(&chunk[k * chunk_with_halo_size], &img[(i - half + k) * imgsize + j - half], chunk_with_halo_size * sizeof(unsigned char));
 
 			/* Synchronization. */
-			poke(mppa_async_default_segment(nchunks), sig_offsets[nchunks], MSG_CHUNK); 
+			poke(mppa_async_default_segment(nchunks), sig_offsets[nchunks], MSG_CHUNK);
 			wait_signal(nchunks);
 
 			/* Receives chunk without halo. */
@@ -89,14 +89,14 @@ static void process_chunks() {
 					send_signal(ck);
 					wait_signal(ck);
 
-					for (int k = 0; k < CHUNK_SIZE; k++) 
+					for (int k = 0; k < CHUNK_SIZE; k++)
 						memcpy(&newimg[(ii + k)*imgsize + jj], &chunk[k * CHUNK_SIZE], CHUNK_SIZE * sizeof(unsigned char));
-				
+
 					jj += CHUNK_SIZE;
 					if ((jj+masksize-1) == imgsize) {
 						jj = 0;
 						ii += CHUNK_SIZE;
-						if ((is_class_huge) && (ii == 16384)) 
+						if ((is_class_huge) && (ii == 16384))
 							ii = 0;
 					}
 				}
@@ -119,13 +119,13 @@ static void process_chunks() {
 		if ((jj+masksize-1) == imgsize) {
 			jj = 0;
 			ii += CHUNK_SIZE;
-			if ((is_class_huge) && (ii == 16384)) 
+			if ((is_class_huge) && (ii == 16384))
 			ii = 0;
 		}
 	}
 
 	/* Releasing slaves. */
-	for (int i = 0; i < nclusters; i++) 
+	for (int i = 0; i < nclusters; i++)
 		send_signal(i);
 }
 
@@ -138,17 +138,17 @@ void gauss_filter(unsigned char *img_, int imgsize_, double *mask_, int masksize
 	masksize = masksize_;
 	chunk_with_halo_size = CHUNK_SIZE + masksize - 1;
 	chunk = (unsigned char *) smalloc(chunk_with_halo_size * chunk_with_halo_size * sizeof(unsigned char));
-	
+
 	if (imgsize == 32782) {
-		/* We will construct the new img on a array of with width = 32782 and 
+		/* We will construct the new img on a array of with width = 32782 and
 		   high = 16394. That's because we don't have enough memory to allocate
-		   an array of 32782 x 32782. So the new img will be construct in 
+		   an array of 32782 x 32782. So the new img will be construct in
 		   this 32782 x 16394 array which will give us the correct time result as
-		   if we are constructing the new img on an 32782 x 32782, but won't give 
+		   if we are constructing the new img on an 32782 x 32782, but won't give
 		   the blurred img.  */
 		newimg = (unsigned char *) scalloc(32782*16394, sizeof(unsigned char));
 		is_class_huge = 1;
-	} else { 
+	} else {
 		newimg = (unsigned char *) scalloc(imgsize * imgsize, sizeof(unsigned char));
 	}
 
@@ -173,13 +173,22 @@ void gauss_filter(unsigned char *img_, int imgsize_, double *mask_, int masksize
 	/* Set slaves statistics. */
 	set_statistics(statistics);
 
+
 	/* Waiting for PE0 of each cluster to end */
 	join_slaves();
 
 	/* Finalizes async server */
 	async_master_finalize();
 
+	printf("OUTPUT MPPA-256:\n");
+	for (int imgI = 0; imgI < imgsize; imgI++)
+	{
+		for (int imgJ = 0; imgJ < imgsize; imgJ++)
+			printf("%d ",	newimg[(imgI)*imgsize + (imgJ)]);
+		printf("\n");
+	}
+
 	/* House keeping. */
 	free(chunk);
 	free(newimg);
-}	
+}

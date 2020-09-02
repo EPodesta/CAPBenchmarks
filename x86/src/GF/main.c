@@ -1,6 +1,6 @@
 /*
  * Copyright(C) 2014 Pedro H. Penna <pedrohenriquepenna@gmail.com>
- * 
+ *
  * Gaussian Filter Benchmark Kernel.
  */
 
@@ -26,22 +26,22 @@ struct problem
 
 /* Problem sizes. */
 /* OUTPUT_IMG_SIZE + (MASK_SIZE-1) = INPUT_IMAGE_SIZE */
-static struct problem tiny     = {  7,   70 };  /* 64 + (7-1) = 70 */
-static struct problem small    = {  7,  4096 };
-static struct problem standard = { 11,  8192 };
-static struct problem large    = { 11, 16384 };
-static struct problem huge     = { 15, 32768 };
+static struct problem tiny	    = {7, 2054}; /* 2048  + (7-1)  = 2054  */
+static struct problem small    = {7, 4102}; /* 4096  + (7-1)  = 4102  */
+static struct problem standard = {11, 8202}; /* 8192  + (11-1) = 8202  */
+static struct problem large    = {11, 16394}; /* 16384 + (11-1) = 16394 */
+static struct problem huge     = {15, 32782}; /* 32768 + (15-1) = 32782 */
 
 /* Be verbose? */
 int verbose = 0;
 
-/* Number of threads. */                
+/* Number of threads. */
 int nthreads = 1;
 
 /* Seed number. */
 static int seed = 0;
 
-/* Problem. */           
+/* Problem. */
 static struct problem *p = &tiny;
 
 /*
@@ -71,19 +71,19 @@ static void readargs(int argc, char **argv)
 	int i;     /* Loop index.       */
 	char *arg; /* Working argument. */
 	int state; /* Processing state. */
-	
+
 	/* State values. */
 	#define READ_ARG     0 /* Read argument.         */
 	#define SET_NTHREADS 1 /* Set number of threads. */
 	#define SET_CLASS    2 /* Set problem class.     */
-	
+
 	state = READ_ARG;
-	
+
 	/* Read command line arguments. */
 	for (i = 1; i < argc; i++)
 	{
 		arg = argv[i];
-		
+
 		/* Set value. */
 		if (state != READ_ARG)
 		{
@@ -101,24 +101,24 @@ static void readargs(int argc, char **argv)
 						p = &large;
 					else if (!strcmp(argv[i], "huge"))
 						p = &huge;
-					else 
+					else
 						usage();
 					state = READ_ARG;
 					break;
-				
+
 				/* Set number of threads. */
 				case SET_NTHREADS :
 					nthreads = atoi(arg);
 					state = READ_ARG;
 					break;
-				
+
 				default:
-					usage();			
+					usage();
 			}
-			
+
 			continue;
 		}
-		
+
 		/* Parse argument. */
 		if (!strcmp(arg, "--verbose"))
 			verbose = 1;
@@ -129,7 +129,7 @@ static void readargs(int argc, char **argv)
 		else
 			usage();
 	}
-	
+
 	/* Invalid argument(s). */
 	if (nthreads < 1)
 		usage();
@@ -145,11 +145,11 @@ static void generate_mask(double *mask)
 	double sec;
 	double first;
 	double total;
-	
+
 	first = 1.0/(2.0*PI*SD*SD);
 	half = p->masksize >> 1;
 	total = 0;
-	
+
 	#define MASK(i, j) \
 		mask[(i)*p->masksize + (j)]
 
@@ -164,7 +164,7 @@ static void generate_mask(double *mask)
 			total += MASK(i + half, j + half);
 		}
 	}
-	
+
 	for (i = 0 ; i < p->masksize; i++)
 	{
 		for (j = 0; j < p->masksize; j++)
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 	uint64_t end;       /* End time.           */
 	uint64_t start;     /* Start time.         */
 	unsigned char *img; /* Image.              */
-	
+
 #ifdef _XEON_PHI_
 	double power;
 #endif
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 	timer_init();
 	srandnum(seed);
 	omp_set_num_threads(nthreads);
-	
+
 	/* Benchmark initialization. */
 	if (verbose)
 		printf("initializing...\n");
@@ -205,11 +205,11 @@ int main(int argc, char **argv)
 	end = timer_get();
 	if (verbose)
 		printf("  time spent: %f\n", timer_diff(start, end)*MICROSEC);
-	
+
 	/* Apply filter. */
 	if (verbose)
 		printf("applying filter...\n");
-	
+
 #ifdef _XEON_PHI_
 	power_init();
 #endif
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 	start = timer_get();
 	gauss_filter(img, p->imgsize, mask, p->masksize);
 	end = timer_get();
-	
+
 #ifdef _XEON_PHI_
 	power = power_end();
 #endif
@@ -228,10 +228,10 @@ int main(int argc, char **argv)
 #ifdef _XEON_PHI_
 	printf("  average power: %f\n", power*0.000001);
 #endif
-	
+
 	/* House keeping. */
 	free(mask);
 	free(img);
-	
+
 	return (0);
 }
