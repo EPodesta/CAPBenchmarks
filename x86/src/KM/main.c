@@ -13,14 +13,16 @@
 struct problem {
   int npoints;    /* Number of points.    */
   int ncentroids; /* Number of centroids. */
+  int dimension; /* Dimension. */
 };
 
 /* Problem sizes. */
-static struct problem tiny = {4096, 256};
-static struct problem small = {8192, 512};
-static struct problem standard = {16384, 1024};
-static struct problem large = {32768, 1024};
-static struct problem huge = {65536, 1024};
+static struct problem nanvixmpi = {15*2048, 64, 4};
+static struct problem tiny = {4096, 256, 16};
+static struct problem small = {8192, 512, 16};
+static struct problem standard = {16384, 1024, 16};
+static struct problem large = {32768, 1024, 16};
+static struct problem huge = {65536, 1024, 16};
 
 static int seed = 0;              /* Seed number. */
 static struct problem *p = &tiny; /* Problem. */
@@ -68,7 +70,9 @@ static void readargs(int argc, char **argv) {
        * class.
        * */
       case SET_CLASS:
-        if (!strcmp(argv[i], "tiny"))
+        if (!strcmp(argv[i], "nanvixmpi"))
+          p = &nanvixmpi;
+        else if (!strcmp(argv[i], "tiny"))
           p = &tiny;
         else if (!strcmp(argv[i], "small"))
           p = &small;
@@ -137,7 +141,7 @@ int main(int argc, char **argv) {
 
   /* Setting the dimension for the
    * problem. */
-  dimension = 16;
+  dimension = p->dimension;
 
   /* Benchmark initialization.
    * */

@@ -27,6 +27,7 @@ struct problem
 };
 
 /* Problem sizes. */
+static struct problem nanvixmpi =  {   1000001,   1000129 };
 static struct problem tiny     =  {   10001,   14096 };
 static struct problem small    =  {  100001,  116384 };
 static struct problem standard =  {  500001,  532768 };
