@@ -50,15 +50,15 @@ int main(int argc, char **argv) {
 	int dimension;       /* Dimension of points. */
 	float *points;       /* Data points.     */
 	uint64_t start, end; /* End time.        */
-	
+
 	readargs(argc, argv);
-	
+
 	timer_init();
 	srandnum(seed);
 
 	/* Setting the dimension for the problem. */
-	dimension = 16; 
-	
+	dimension = 16;
+
 	/* Benchmark initialization. */
 	if (verbose)
 		printf("initializing...\n");
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 
 	if (verbose)
 		printf("  time spent: %f\n", timer_diff(start, end)*MICROSEC);
-	
+
 	/* Cluster data. */
 	if (verbose)
 		printf("clustering data...\n");
@@ -79,11 +79,13 @@ int main(int argc, char **argv) {
 	end = timer_get();
 	total = timer_diff(start, end);
 
+  	for (i = 0; i < prob->npoints; i++)
+		printf("  map:    %d\n", map[i]);
 	inform_statistics();
-	
+
 	/* House keeping. */
 	free(map);
 	free(points);
-	
+
 	return (0);
 }
