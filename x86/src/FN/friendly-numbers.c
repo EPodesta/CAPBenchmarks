@@ -4,38 +4,79 @@
  * friendly-numbers.c - Friendly numbers kernel.
  */
 
-#include <global.h>
-#include <omp.h>
 #include <stdlib.h>
-#include <util.h>
 #include "fn.h"
 
-/*
+static int _friendly_numbers = 0; /* Number of friendly numbers. */
+
+static struct item *task;         /* Array of items (task).      */
+
+/*============================================================================*
+ * Division                                                                   *
+ *============================================================================*/
+
+struct division
+{
+	int quotient;
+	int remainder;
+};
+
+struct division divide(int a, int b)
+{
+	struct division result;
+
+	result.quotient = 0;
+	result.remainder = a;
+
+	while (result.remainder >= b)
+	{
+		result.remainder -= b;
+		result.quotient++;
+	}
+
+	return (result);
+}
+
+/*============================================================================*
+ * Functions                                                                  *
+ *============================================================================*/
+
+/**
+ * @brief Initializes the task array.
+ */
+static void init_task()
+{
+	int aux = PROBLEM_START_NUM;
+
+	for (int i = 0; i < PROBLEM_SIZE; ++i)
+		task[i].number = aux++;
+}
+
+/**
  * Computes the Greatest Common Divisor of two numbers.
  */
 static int gcd(int a, int b)
 {
-  int mod;
+	struct division result;
+	int mod;
 
-  /* Compute greatest common divisor. */
-  while (b != 0)
-  {
-     mod = a % b;
-     a = b;
-     b = mod;
-  }
+	while (b != 0)
+	{
+		result = divide(a, b);
+		mod = result.remainder;
+		a = b;
+		b = mod;
+	}
 
-  return (a);
+	return (a);
 }
 
-/*
- * Some of divisors.
- */
 static int sumdiv(int n)
 {
-	int sum;    /* Sum of divisors. */
-	int factor; /* Working factor.  */
-	int maxD;   /* Max divisor before n */
+	int sum;    /* Sum of divisors.     */
+	int factor; /* Working factor.      */
+	int maxD; 	/* Max divisor before n */
+	struct division result;
 
 	maxD = (int)n/2;
 
@@ -44,79 +85,75 @@ static int sumdiv(int n)
 	/* Compute sum of divisors. */
 	for (factor = 2; factor <= maxD; factor++)
 	{
-		/* Divisor found. */
-		if ((n%factor) == 0)
+		result = divide(n, factor);
+		if (result.remainder == 0)
 			sum += factor;
 	}
 
 	return (sum);
 }
 
-/*
- * Computes friendly numbers.
+/**
+ * @brief Compute abundances for task array.
  */
-int friendly_numbers(int start, int end)
+static void compute_abundances()
 {
-	int n;        /* Divisor.                    */
-	int *num;     /* Numerator.                  */
-	int *den;     /* Denominator.                */
-	int range;    /* Range of numbers.           */
-	int i, j;     /* Loop indexes.               */
-	int nfriends; /* Number of friendly numbers. */
-	int *tasks;   /* Tasks.                      */
-	int tid;      /* Thread id.                  */
+	int n;
 
-	range = end - start + 1;
+	for (int i = 0; i < PROBLEM_SIZE; ++i)
+	{
+		task[i].num = sumdiv(task[i].number);
+		task[i].den = task[i].number;
 
-	num = smalloc(sizeof(int)*range);
-	den = smalloc(sizeof(int)*range);
-	tasks = smalloc(sizeof(int)*range);
+		n = gcd(task[i].num, task[i].den);
 
-	/* Balance workload. */
-	balance(tasks, range, nthreads);
+		if (n != 0)
+		{
+			struct division result1 = divide(task[i].num, n);
+			struct division result2 = divide(task[i].den, n);
+			task[i].num = result1.quotient;
+			task[i].den = result2.quotient;
+		}
+	}
+}
+
+/**
+ * @brief Counts the friendly numbers.
+ *
+ * @returns Returns the number of friendly numbers in @p task.
+ */
+static void sum_friendly_numbers()
+{
+	for (int i = 0; i < PROBLEM_SIZE; i++)
+	{
+		for (int j = (i + 1); j < PROBLEM_SIZE; j++)
+		{
+			if ((task[i].num == task[j].num) && (task[i].den == task[j].den))
+				_friendly_numbers++;
+		}
+	}
+}
+
+/**
+ * @brief Friendly Numbers sequential solution.
+ */
+void friendly_numbers(void)
+{
+	/* Allocates task array. */
+	task = (struct item *) malloc(sizeof(struct item) * PROBLEM_SIZE);
+
+	/* Initializes task array. */
+	init_task();
 
 	/* Compute abundances. */
-	#pragma omp parallel private(i, j, tid, n) default(shared)
-	{
-		tid = omp_get_thread_num();
+	compute_abundances();
 
-		for (i = start; i <= end; i++)
-		{
-			j = i - start;
+	/* Gets the number of friendly numbers. */
+	sum_friendly_numbers();
 
-			/* Not my task. */
-			if (tasks[j] != tid)
-				continue;
+	/* Frees the allocated memory. */
+	free((void *) task);
 
-			num[j] = sumdiv(i);
-			den[j] = i;
-
-			n = gcd(num[j], den[j]);
-
-			if (n != 0)
-			{
-				num[j] /= n;
-				den[j] /= n;
-			}
-		}
-	}
-
-	/* Check friendly numbers. */
-	nfriends = 0;
-	#pragma omp parallel for private(i, j) default(shared) reduction(+:nfriends)
-	for (i = 1; i < range; i++)
-	{
-		for (j = 0; j < i; j++)
-		{
-			/* Friends. */
-			if ((num[i] == num[j]) && (den[i] == den[j]))
-				nfriends++;
-		}
-	}
-
-	free(tasks);
-	free(num);
-	free(den);
-
-	return (nfriends);
+	/* Prints the result. */
+	printf("result: %d\n", _friendly_numbers);
 }

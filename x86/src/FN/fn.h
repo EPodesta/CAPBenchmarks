@@ -1,20 +1,37 @@
 /*
  * Copyright(C) 2014 Pedro H. Penna <pedrohenriquepenna@gmail.com>
- * 
+ *
  * fh.h - Friendly Numbers kernel library.
  */
 
 #ifndef _FN_H_
 #define _FN_H_
 
-	/*
-	 * Balances workload.
-	 */
-	extern void balance(int *work, int n, int k);
+#include <stdio.h>
 
-	/*
-	 * Computes friendly numbers.
-	 */
-	extern int friendly_numbers(int start, int end);
+/*
+ * Computes friendly numbers.
+ */
+extern void friendly_numbers();
+
+/*============================================================================*
+ * Parameters                                                                 *
+ *============================================================================*/
+
+#define PROBLEM_SIZE                                 11605
+#define PROBLEM_START_NUM                          1000001
+#define PROBLEM_END_NUM      (PROBLEM_START + PROBLEM_SIZE)
+
+/*============================================================================*
+ * Kernel                                                                     *
+ *============================================================================*/
+
+struct item
+{
+	int number;
+	int num;
+	int den;
+};
+
 
 #endif /* _FN_H_ */
