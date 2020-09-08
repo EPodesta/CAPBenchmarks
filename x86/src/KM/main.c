@@ -17,7 +17,6 @@ struct problem {
 };
 
 /* Problem sizes. */
-static struct problem nanvixmpi = {15*2048, 64, 4};
 static struct problem tiny = {4096, 256, 16};
 static struct problem small = {8192, 512, 16};
 static struct problem standard = {16384, 1024, 16};
@@ -70,9 +69,7 @@ static void readargs(int argc, char **argv) {
        * class.
        * */
       case SET_CLASS:
-        if (!strcmp(argv[i], "nanvixmpi"))
-          p = &nanvixmpi;
-        else if (!strcmp(argv[i], "tiny"))
+        if (!strcmp(argv[i], "tiny"))
           p = &tiny;
         else if (!strcmp(argv[i], "small"))
           p = &small;

@@ -26,7 +26,6 @@ struct problem
 
 /* Problem sizes. */
 /* OUTPUT_IMG_SIZE + (MASK_SIZE-1) = INPUT_IMAGE_SIZE */
-static struct problem nanvixmpi = {7, 518}; /* 512  + (7-1)  = 518  */
 static struct problem tiny	   = {7, 2054}; /* 2048  + (7-1)  = 2054  */
 static struct problem small    = {7, 4102}; /* 4096  + (7-1)  = 4102  */
 static struct problem standard = {11, 8202}; /* 8192  + (11-1) = 8202  */
