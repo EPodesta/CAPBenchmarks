@@ -5,61 +5,121 @@
  * gaussian-filter.c - Gaussian filter kernel.
  */
 
-#include <global.h>
-#include <assert.h>
-#include <math.h>
-#include <omp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <util.h>
+#include "gf.h"
+
+/**
+ * @brief Kernel Data
+ */
+/**@{*/
+static unsigned char *img;    /* Input Image.  */
+static unsigned char *newimg; /* Output Image. */
+static double *mask;           /* Mask.         */
+
+/**@}*/
+/**
+ * @brief Generates the special mask.
+ */
+static void generate_mask(void)
+{
+    double sec;
+    double first;
+    double total_aux;
+
+    total_aux = 0;
+    first     = 1.0/(2.0 * PI * SD * SD);
+
+    for (int i = -(HALF); i <= (HALF); i++)
+    {
+        for (int j = -(HALF); j <= (HALF); j++)
+        {
+            sec = -((i * i + j * j)/2.0 * SD * SD);
+            sec = pow(E,sec);
+
+            MASK(i + (HALF), j + (HALF)) = first * sec;
+            total_aux += MASK(i + (HALF), j + (HALF));
+        }
+    }
+
+    for (int i = 0; i < PROBLEM_MASKSIZE; i++)
+    {
+        for (int j = 0; j < PROBLEM_MASKSIZE; j++)
+            MASK(i, j) /= total_aux;
+    }
+}
+
+/**
+ * @brief Initializes the image matrix.
+ */
+static void init(void)
+{
+	srandnum(PROBLEM_SEED);
+    for (int i = 0; i < PROBLEM_IMGSIZE2; i++)
+        img[i] = randnum() & 0xff;
+
+    generate_mask();
+}
 
 /*
  * Gaussian filter.
  */
-void gauss_filter(unsigned char *img, int imgsize, double *mask, int masksize)
+static void gauss_filter(void)
 {
-	int half;
-	double pixel;
-	unsigned char *newimg;
-	int imgI, imgJ, maskI, maskJ;
+    double pixel;
 
-	newimg = scalloc(imgsize * imgsize, sizeof(unsigned char));
+    for (int imgI = HALF; imgI < (PROBLEM_IMGSIZE - HALF); imgI++)
+    {
+        for (int imgJ = HALF; imgJ < (PROBLEM_IMGSIZE - HALF); imgJ++)
+        {
+            pixel = 0.0;
 
-	#define MASK(i, j) \
-		mask[(i)*masksize + (j)]
+            for (int maskI = 0; maskI < PROBLEM_MASKSIZE; maskI++)
+            {
+                for (int maskJ = 0; maskJ < PROBLEM_MASKSIZE; maskJ++)
+                    pixel += IMAGE(imgI + maskI - HALF, imgJ + maskJ - HALF) *
+                             MASK(maskI, maskJ);
+            }
 
-	#define IMG(i, j) \
-		img[(i)*imgsize + (j)]
+            NEWIMAGE(imgI, imgJ) = (pixel > 255) ? 255 : (int)pixel;
+        }
+    }
+}
 
-	#define NEWIMG(i, j) \
-		newimg[(i)*imgsize + (j)]
+/*============================================================================*
+ * Kernel                                                                     *
+ *============================================================================*/
 
-	half = masksize/2;
+void do_kernel(void)
+{
+    /* Allocates memory for original image. */
+    img = (unsigned char *)malloc(sizeof(unsigned char) * PROBLEM_IMGSIZE2);
 
-	#pragma omp parallel default(shared) private(imgI,imgJ,maskI,maskJ,pixel)
-	{
-		#pragma omp for
-		for (imgI = half; imgI < imgsize - half; imgI++)
-		{
-			for (imgJ = half; imgJ < imgsize - half; imgJ++)
-			{
-				pixel = 0.0;
-				for (maskI = 0; maskI < masksize; maskI++)
-					for (maskJ = 0; maskJ < masksize; maskJ++)
-						pixel += IMG(imgI + maskI - half, imgJ + maskJ - half) * MASK(maskI, maskJ);
+    /* Allocates memory to the gaussian mask. */
+    mask = (double *)malloc(sizeof(double) * PROBLEM_MASKSIZE2);
 
-				NEWIMG(imgI, imgJ) = (pixel > 255) ? 255 : (int)pixel;
-			}
-		}
-	}
+    /* Allocates memory for the new image. */
+    newimg = (unsigned char *)malloc(sizeof(unsigned char) * PROBLEM_IMGSIZE2);
 
-	printf("OUTPUT X86:\n");
-	for (imgI = 0; imgI < imgsize; imgI++)
-	{
-		for (imgJ = 0; imgJ < imgsize; imgJ++)
-			fprintf(stderr, "%d ",	NEWIMG(imgI, imgJ));
-		fprintf(stderr, "\n");
-	}
+    printf("initializing...\n");
 
-	free(newimg);
+    init();
+
+    /* Apply filter. */
+    printf("applying filter...\n");
+
+    gauss_filter();
+
+    /* Prints the resultant image. */
+    printf("Result:\n");
+    for (int imgI = 0; imgI < PROBLEM_IMGSIZE; imgI++)
+    {
+        for (int imgJ = 0; imgJ < PROBLEM_IMGSIZE; imgJ++)
+            printf("%d ", NEWIMAGE(imgI, imgJ));
+
+        printf("\n");
+    }
+
+    /* Frees the allocated memory. */
+    free((void *)newimg);
+    free((void *)mask);
+    free((void *)img);
 }
