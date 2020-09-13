@@ -1,171 +1,148 @@
 /* Kernel Include */
 #include "km.h"
-#include <global.h>
-#include <util.h>
 
-/* C And MPPA Library Includes*/
-#include <math.h>
-#include <omp.h>
-#include <string.h>
+/* K-means Data */
+static float *points;    /* Data points.              */
+static float *centroids; /* Data centroids.           */
+static int *map;         /* Map of clusters.          */
+static int *population;  /* Population of centroids.  */
+static int has_changed;  /* Has any centroid changed? */
 
-#include <stdio.h>
+const int _dimension = DIMENSION_MAX;
 
-/* Kmeans data. */
-int dimension;    /* Problem dimension         */
-int npoints;      /* Number of points.         */
-int ncentroids;   /* Number of clusters.       */
-int *map;         /* Map of clusters.          */
-float *points;    /* Data being clustered.     */
-float *centroids; /* Data centroids.           */
-int *populations; /* Clusters population.      */
-int *has_changed; /* has any centroid change?  */
+uint64_t total_time = 0;
 
-static omp_lock_t *lock;
+/*============================================================================*
+ * initialize_variables()                                                     *
+ *============================================================================*/
 
-static void populate() {
-  int tid;        /* Thread ID.             */
-  int i, j;       /* Loop indexes.          */
-  int lock_aux;   /* Lock auxiliar.         */
-  int init_map;   /* Point initial mapping. */
-  float tmp_dist; /* Temporary distance.    */
-  float distance; /* Distance.              */
+static void initialize_variables()
+{
+	srandnum(PROBLEM_SEED);
+	for (int i = 0; i < PROBLEM_NUM_POINTS*DIMENSION_MAX; i++)
+		points[i] = randnum() & 0xffff;
 
-  /* Reset variables for new calculation. */
-  memset(populations, 0, ncentroids * sizeof(int));
-  memset(has_changed, 0, nthreads * sizeof(int));
+	/* Initialize mapping. */
+	for (int i = 0; i < PROBLEM_NUM_POINTS; i++)
+		map[i] = -1;
 
-/* Iterate over data points. */
-#pragma omp parallel private(i, j, tmp_dist, distance, tid, init_map,          \
-                             lock_aux) default(shared)
-  {
-    tid = omp_get_thread_num();
+	/* Initialize centroids. */
+	for (int i = 0; i < PROBLEM_NUM_CENTROIDS; i++)
+	{
+		int j = randnum()%PROBLEM_NUM_POINTS;
+		memcpy(CENTROID(i), POINT(j), DIMENSION_MAX*sizeof(float));
+		map[j] = i;
+	}
 
-#pragma omp for
-    for (i = 0; i < npoints; i++) {
-      distance = vector_distance(CENTROIDS(map[i]), POINTS(i));
-      init_map = map[i];
-
-      /* Looking for closest cluster. */
-      for (j = 0; j < ncentroids; j++) {
-        /* Point is in this cluster. */
-        if (j == map[i])
-          continue;
-
-        tmp_dist = vector_distance(CENTROIDS(j), POINTS(i));
-
-        /* Found. */
-        if (tmp_dist < distance) {
-          map[i] = j;
-          distance = tmp_dist;
-        }
-      }
-
-      lock_aux = map[i] % nthreads;
-
-      omp_set_lock(&lock[lock_aux]);
-      populations[map[i]]++;
-      omp_unset_lock(&lock[lock_aux]);
-
-      if (map[i] != init_map)
-        has_changed[tid] = 1;
-    }
-  }
+	/* Map unmapped data points. */
+	for (int i = 0; i < PROBLEM_NUM_POINTS; i++)
+	{
+		if (map[i] < 0)
+			map[i] = randnum()%PROBLEM_NUM_CENTROIDS;
+	}
 }
 
-static void compute_centroids() {
-  int i;        /* Loop index.                 */
-  int lock_aux; /* Lock auxiliar.              */
+/*============================================================================*
+ * populate()                                                                 *
+ *============================================================================*/
 
-  /* Clear all centroids for recalculation. */
-  memset(CENTROIDS(0), 0, ncentroids * dimension * sizeof(float));
+static void populate(void )
+{
+	int init_map;   /* Point initial mapping. */
+	float tmp_dist; /* Temporary distance.    */
+	float distance; /* Distance.              */
 
-/* Compute means. */
-#pragma omp parallel private(i, lock_aux) default(shared)
-  {
-/* Computing centroids means. */
-#pragma omp for
-    for (i = 0; i < npoints; i++) {
-      lock_aux = map[i] % nthreads;
-      omp_set_lock(&lock[lock_aux]);
-      vector_add(CENTROIDS(map[i]), POINTS(i));
-      omp_unset_lock(&lock[lock_aux]);
-    }
+	/* Reset variables for new calculation. */
+	for (int i = 0; i < PROBLEM_NUM_CENTROIDS; ++i)
+		population[i] = 0;
 
-#pragma omp barrier
+	/* Iterate over data points. */
+	for (int i = 0; i < PROBLEM_NUM_POINTS; i++)
+	{
+		distance = vector_distance(CENTROID(map[i]), POINT(i));
+		init_map = map[i];
 
-/* Computing centroids means. */
-#pragma omp for
-    for (i = 0; i < ncentroids; i++) {
-      if (populations[i] > 1)
-        vector_mult(CENTROIDS(i), 1.0 / populations[i]);
-    }
-  }
+		/* Looking for closest cluster. */
+		for (int j = 0; j < PROBLEM_NUM_CENTROIDS; j++) {
+			/* Point is in this cluster. */
+			if (j == map[i])
+				continue;
+
+			tmp_dist = vector_distance(CENTROID(j), POINT(i));
+
+			/* Found. */
+			if (tmp_dist < distance) {
+				map[i] = j;
+				distance = tmp_dist;
+			}
+		}
+
+		population[map[i]]++;
+
+		if (map[i] != init_map)
+			has_changed = 1;
+	}
 }
 
-/* Sets centroids and begins to map points. */
-static void init_mapping() {
-  int i, j; /* Loop index. */
+/*============================================================================*
+ * compute_centroids()                                                        *
+ *============================================================================*/
 
-  /* Initialize mapping. */
-  for (i = 0; i < npoints; i++)
-    map[i] = -1;
+static void compute_centroids(void)
+{
+	/* Compute means. */
+	memset(CENTROID(0), 0, PROBLEM_NUM_CENTROIDS*DIMENSION_MAX*sizeof(float));
+	for (int i = 0; i < PROBLEM_NUM_POINTS; i++)
+		vector_add(CENTROID(map[i]), POINT(i));
 
-  /* Initialize centroids. */
-  for (i = 0; i < ncentroids; i++) {
-    j = randnum() % npoints;
-    vector_assign(CENTROIDS(i), POINTS(j));
-    map[j] = i;
-  }
-
-  /* Map unmapped data points. */
-  for (i = 0; i < npoints; i++) {
-    if (map[i] < 0)
-      map[i] = randnum() % ncentroids;
-  }
+	for (int i = 0; i < PROBLEM_NUM_CENTROIDS; i++)
+		vector_mult(CENTROID(i), 1.0f/population[i]);
 }
 
-/* Clusters data. */
-int *kmeans(float *_points, int _npoints, int _ncentroids, int _dimension) {
-  int i;     /* Loop index. */
-  int again; /* Loop again? */
+/*============================================================================*
+ * do_kmeans()                                                                *
+ *============================================================================*/
 
-  /* Setup parameters. */
-  points = _points;
-  npoints = _npoints;
-  ncentroids = _ncentroids;
-  dimension = _dimension;
+void do_kernel(void)
+{
+	int iterations;
 
-  /* Allocate memory for auxiliary structures. */
-  map = scalloc(npoints, sizeof(int));
-  centroids = smalloc(ncentroids * dimension * sizeof(float));
-  populations = smalloc(ncentroids * sizeof(int));
-  lock = smalloc(nthreads * sizeof(omp_lock_t));
-  has_changed = smalloc(nthreads * sizeof(int));
+	/* Allocates memory for points. */
+	points = (float *) malloc(sizeof(float) * PROBLEM_NUM_POINTS*DIMENSION_MAX);
 
-  /* Initialize mapping. */
-  init_mapping();
+	/* Allocates memory for centroids. */
+	centroids = (float *) malloc(sizeof(float) * PROBLEM_NUM_CENTROIDS*DIMENSION_MAX);
 
-  omp_set_num_threads(nthreads);
-  for (i = 0; i < nthreads; i++)
-    omp_init_lock(&lock[i]);
+	/* Allocates memory for map. */
+	map = (int *) malloc(sizeof(int) * PROBLEM_NUM_POINTS);
 
-  /* Iterate over points until all clusters are defined. */
-  do {
-    populate();
-    compute_centroids();
+	/* Allocates memory for population array. */
+	population = (int *) malloc(sizeof(int) * PROBLEM_NUM_CENTROIDS);
 
-    for (i = 0; i < nthreads; i++) {
-      if (has_changed[i] == 1)
-        break;
-    }
+	/* Benchmark initialization. */
+	initialize_variables();
 
-    again = (i < nthreads) ? 1 : 0;
-  } while (again);
+	iterations = 0;
 
-  /* House keeping. */
-  free(populations);
-  free(centroids);
-  free(has_changed);
+	/* Cluster data. */
+	do
+	{
+		has_changed = 0;
 
-  return map;
+		populate();
+		compute_centroids();
+
+		iterations++;
+	} while (has_changed);
+
+	for (int i = 0; i < PROBLEM_NUM_POINTS; i++)
+		printf("%d ", map[i]);
+	printf("\n");
+
+	/* Frees the allocated memory. */
+	free((void *) population);
+	free((void *) map);
+	free((void *) centroids);
+	free((void *) points);
 }
+

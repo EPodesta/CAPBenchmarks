@@ -1,28 +1,46 @@
 #ifndef _KM_H_
 #define _KM_H_
 
-#define CENTROIDS(i) \
-		(&centroids[(i)*dimension])
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <util.h>
 
-#define POINTS(i) \
-		(&points[(i)*dimension])
+/*============================================================================*
+ * Parameters                                                                 *
+ *============================================================================*/
 
-#define TMP_CENTROIDS(i) \
-		(tmp[(i)*dimension])
+	#define PROBLEM_SEED                           0
+	#define PROBLEM_LNPOINTS                   (4096)
+	#define PROBLEM_NUM_CENTROIDS                256
+	#define DIMENSION_MAX                         16
+	#define PROBLEM_NUM_POINTS     (PROBLEM_LNPOINTS)
 
-/* Clusters points. */
-int *kmeans(float *_points, int npoints, int ncentroids, int dimension);
+/*============================================================================*
+ * Vector                                                                     *
+ *============================================================================*/
 
-/* Assigns a vector to another. */
-extern void vector_assign(float *v1, float *v2);
+	extern float vector_distance(float *a, float *b);
+	extern float *vector_add(float *v1, const float *v2);
+	extern float *vector_mult(float *v, float scalar);
+	extern float *vector_assign(float *v1, const float *v2);
+	extern int vector_equal(const float *v1, const float *v2);
 
-/* Computes the euclidean distance between two points. */
-extern float vector_distance(float *v1, float *v2);
+/*============================================================================*
+ * Kernel                                                                     *
+ *============================================================================*/
 
-/* Multiplies a vector by a scalar. */
-extern void vector_mult(float *v, float scalar);
+	#define CENTROID(i) \
+		(&centroids[(i)*DIMENSION_MAX])
 
-/* Adds two vectors. */
-extern void vector_add(float *v1, float *v2);
+	#define POINT(i) \
+		(&points[(i)*DIMENSION_MAX])
+
+	#define POPULATION(i, j) \
+		(&population[(i)*PROBLEM_NUM_CENTROIDS + (j)])
+
+	extern void do_kernel();
 
 #endif
