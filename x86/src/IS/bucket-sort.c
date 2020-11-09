@@ -9,8 +9,18 @@
 #include "is.h"
 #include <stdio.h>
 
-/* Number of buckets. */
-#define NUM_BUCKETS 8192
+static int *task;
+
+void init_task(void)
+{
+	double num;
+
+	for (int i = 0; i < PROBLEM_SIZE; i++)
+	{
+		num = normalnum(0, (PROBLEM_MAX >> 4));
+		task[i] = (int)((num < 0) ? -num : num) + 1;
+	}
+}
 
 /*
  * Bucket sort algorithm.
@@ -29,73 +39,72 @@ void integer_sort(int *array, int n)
 	buckets = smalloc(NUM_BUCKETS*sizeof(struct darray *));
 	for (i = 0; i < NUM_BUCKETS; i++)
 		buckets[i] = darray_create(n/NUM_BUCKETS);
-	
+
 	max = INT_MIN;
-	
-	#pragma omp parallel private(i, j, k, _max)
-	{	
-		_max = INT_MIN;
+	_max = INT_MIN;
 
-		/* Find max number in the array. */
-		#pragma omp for schedule(static)
-		for (i = 0; i < n; i++)
-		{
-			/* Found. */
-			if (array[i] > _max)
-				_max = array[i];
-		}
-
-		#pragma omp critical
-		{
-			if (_max > max) {
-				max = _max;
-			}
-		}
-		
-		#pragma omp master
-		range = max/NUM_BUCKETS;
-		#pragma omp barrier
-		
-		/* Distribute numbers into buckets. */
-		#pragma omp master
-		for (i = 0; i < n; i++)
-		{
-			j = array[i]/range;
-			if (j >= NUM_BUCKETS)
-				j = NUM_BUCKETS - 1;
-
-			darray_append(buckets[j], array[i]);
-		}
-		
-		/* Sort Each bucket. */
-		#pragma omp for schedule(dynamic)
-		for (i = 0; i < NUM_BUCKETS; i++)
-		{
-			if (darray_size(buckets[i]) > 0)
-				sort(buckets[i]);
-		}
-		
-		#pragma omp master
-		{
-			/* Build indexes. */
-			indexes[0] = 0;
-			for (i = 1; i < NUM_BUCKETS; i++)
-				indexes[i] = indexes[i - 1] + darray_size(buckets[i]);
-		
-			/* Rebuild array. */
-			for (i = 0; i < NUM_BUCKETS; i++)
-			{
-				k = indexes[i];
-					
-				for (j = 0; j < darray_size(buckets[i]); j++)
-					array[k + j] = darray_get(buckets[i], j);
-			}
-		}
+	/* Find max number in the array. */
+	for (i = 0; i < n; i++)
+	{
+		/* Found. */
+		if (array[i] > _max)
+			_max = array[i];
 	}
-	
+
+	if (_max > max) {
+		max = _max;
+	}
+
+	range = max/NUM_BUCKETS;
+
+	/* Distribute numbers into buckets. */
+	for (i = 0; i < n; i++)
+	{
+		j = array[i]/range;
+		if (j >= NUM_BUCKETS)
+			j = NUM_BUCKETS - 1;
+
+		darray_append(buckets[j], array[i]);
+	}
+
+	/* Sort Each bucket. */
+	for (i = 0; i < NUM_BUCKETS; i++)
+	{
+		if (darray_size(buckets[i]) > 0)
+			sort(buckets[i]);
+	}
+
+	/* Build indexes. */
+	indexes[0] = 0;
+	for (i = 1; i < NUM_BUCKETS; i++)
+		indexes[i] = indexes[i - 1] + darray_size(buckets[i]);
+
+	/* Rebuild array. */
+	for (i = 0; i < NUM_BUCKETS; i++)
+	{
+		k = indexes[i];
+
+		for (j = 0; j < darray_size(buckets[i]); j++)
+			array[k + j] = darray_get(buckets[i], j);
+	}
+
 	/* House keeping. */
 	for (i = 0; i < NUM_BUCKETS; i++)
 		darray_destroy(buckets[i]);
 	free(buckets);
 	free(indexes);
+}
+
+void do_kernel(void)
+{
+	task = malloc(PROBLEM_SIZE*sizeof(int));
+
+	init_task();
+
+	integer_sort(task, PROBLEM_SIZE);
+
+	for ( int i = 0; i < PROBLEM_SIZE; i++)
+		printf("%d ", task[i]);
+
+	free(task);
 }
