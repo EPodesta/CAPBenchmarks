@@ -19,6 +19,18 @@
 	assert(l != NULL); \
 	assert(u != NULL); \
 
+static struct matrix *m;
+static struct matrix *l;
+static struct matrix *u;
+
+void init_task()
+{
+	m = matrix_create(PROBLEM_HEIGHT, PROBLEM_WIDTH);
+	l = matrix_create(PROBLEM_HEIGHT, PROBLEM_WIDTH);
+	u = matrix_create(PROBLEM_HEIGHT, PROBLEM_WIDTH);
+	matrix_random(m);
+}
+
 /*
  * Swaps two rows of a matrix.
  */
@@ -180,4 +192,16 @@ int lower_upper(struct matrix *m, struct matrix *l, struct matrix *u)
 	}
 
 	return (0);
+}
+
+void do_kernel()
+{
+	init_task();
+
+	lower_upper(m, l, u);
+
+	/* House keeping. */
+	matrix_destroy(u);
+	matrix_destroy(l);
+	matrix_destroy(m);
 }
