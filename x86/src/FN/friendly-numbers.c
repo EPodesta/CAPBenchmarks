@@ -12,32 +12,6 @@ static int _friendly_numbers = 0; /* Number of friendly numbers. */
 static struct item *task;         /* Array of items (task).      */
 
 /*============================================================================*
- * Division                                                                   *
- *============================================================================*/
-
-struct division
-{
-	int quotient;
-	int remainder;
-};
-
-struct division divide(int a, int b)
-{
-	struct division result;
-
-	result.quotient = 0;
-	result.remainder = a;
-
-	while (result.remainder >= b)
-	{
-		result.remainder -= b;
-		result.quotient++;
-	}
-
-	return (result);
-}
-
-/*============================================================================*
  * Functions                                                                  *
  *============================================================================*/
 
@@ -57,13 +31,11 @@ static void init_task()
  */
 static int gcd(int a, int b)
 {
-	struct division result;
 	int mod;
 
 	while (b != 0)
 	{
-		result = divide(a, b);
-		mod = result.remainder;
+		mod = a%b;
 		a = b;
 		b = mod;
 	}
@@ -76,7 +48,6 @@ static int sumdiv(int n)
 	int sum;    /* Sum of divisors.     */
 	int factor; /* Working factor.      */
 	int maxD; 	/* Max divisor before n */
-	struct division result;
 
 	maxD = (int)n/2;
 
@@ -85,8 +56,7 @@ static int sumdiv(int n)
 	/* Compute sum of divisors. */
 	for (factor = 2; factor <= maxD; factor++)
 	{
-		result = divide(n, factor);
-		if (result.remainder == 0)
+		if (n%factor == 0)
 			sum += factor;
 	}
 
@@ -109,10 +79,8 @@ static void compute_abundances()
 
 		if (n != 0)
 		{
-			struct division result1 = divide(task[i].num, n);
-			struct division result2 = divide(task[i].den, n);
-			task[i].num = result1.quotient;
-			task[i].den = result2.quotient;
+			task[i].num /= n;
+			task[i].den /= n;
 		}
 	}
 }

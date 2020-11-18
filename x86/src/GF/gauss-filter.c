@@ -90,14 +90,15 @@ static void gauss_filter(void)
 
 void do_kernel(void)
 {
+
     /* Allocates memory for original image. */
     img = (unsigned char *)malloc(sizeof(unsigned char) * PROBLEM_IMGSIZE2);
 
-    /* Allocates memory to the gaussian mask. */
-    mask = (double *)malloc(sizeof(double) * PROBLEM_MASKSIZE2);
-
     /* Allocates memory for the new image. */
     newimg = (unsigned char *)malloc(sizeof(unsigned char) * PROBLEM_IMGSIZE2);
+
+    /* Allocates memory to the gaussian mask. */
+    mask = (double *)malloc(sizeof(double) * PROBLEM_MASKSIZE2);
 
     printf("initializing...\n");
 
@@ -108,18 +109,8 @@ void do_kernel(void)
 
     gauss_filter();
 
-    /* Prints the resultant image. */
-    printf("Result:\n");
-    for (int imgI = 0; imgI < PROBLEM_IMGSIZE; imgI++)
-    {
-        for (int imgJ = 0; imgJ < PROBLEM_IMGSIZE; imgJ++)
-            printf("%d ", NEWIMAGE(imgI, imgJ));
-
-        printf("\n");
-    }
-
     /* Frees the allocated memory. */
-    free((void *)newimg);
     free((void *)mask);
+    free((void *)newimg);
     free((void *)img);
 }
