@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 #include <global.h>
 #include <math.h>
 #include <omp.h>
@@ -162,20 +163,20 @@ int lower_upper(struct matrix *m, struct matrix *l, struct matrix *u)
 		{
 			if (i > j)
 			{
-				MATRIX(l, i, j) = 0.0;
-				MATRIX(u, i, j) = MATRIX(m, i, j);
+				MATRIX(u, i, j) = 0.0;
+				MATRIX(l, i, j) = MATRIX(m, i, j);
 			}
 
 			else if (i < j)
 			{
-				MATRIX(l, i, j) = MATRIX(m, i, j);
-				MATRIX(u, i, j) = 0.0;
+				MATRIX(u, i, j) = MATRIX(m, i, j);
+				MATRIX(l, i, j) = 0.0;
 			}
 
 			else
 			{
 				MATRIX(l, i, j) = 1.0;
-				MATRIX(u, i, j) = 1.0;
+				MATRIX(u, i, j) = MATRIX(m, i, j);
 			}
 		}
 	}
