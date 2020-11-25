@@ -186,10 +186,13 @@ int lower_upper(struct matrix *m, struct matrix *l, struct matrix *u)
 
 void do_kernel()
 {
+	printf("Init task\n");
 	init_task();
 
+	printf("Computing LU...\n");
 	lower_upper(m, l, u);
 
+	printf("Done\n");
 	/* House keeping. */
 	matrix_destroy(u);
 	matrix_destroy(l);

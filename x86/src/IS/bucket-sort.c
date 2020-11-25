@@ -86,9 +86,12 @@ void do_kernel(void)
 {
 	task = malloc(PROBLEM_SIZE*sizeof(int));
 
+	printf("Init task\n");
 	init_task();
 
+	printf("Sorting...\n");
 	bucketsort(task, PROBLEM_SIZE);
 
+	printf("Done\n");
 	free(task);
 }
