@@ -13,86 +13,73 @@ static int *task;
 
 void init_task(void)
 {
-	double num;
-
 	for (int i = 0; i < PROBLEM_SIZE; i++)
-	{
-		num = normalnum(0, (PROBLEM_MAX >> 4));
-		task[i] = (int)((num < 0) ? -num : num) + 1;
+		task[i] = randnum() & 0xfffff;
+}
+/* Rebuilds array. */
+static void rebuild_array(struct bucket **done, int *array) {
+	int j = 0; 		/* array[] offset. */
+	int i;  		/* Loop index.     */
+
+	j = bucket_size(done[0]);
+	bucket_merge(done[0], &array[j-1]);
+
+	for (i = 1; i < NUM_BUCKETS; i++) {
+		j += bucket_size(done[i]);
+		bucket_merge(done[i], &array[j-1]);
 	}
 }
 
-/*
- * Bucket sort algorithm.
- */
-void integer_sort(int *array, int n)
-{
-	int max, _max;           /* Max number in array. */
-	int range;               /* Bucket range.        */
-	int i, j, k;             /* Loop indexes.        */
-	int *indexes;            /* Index for buckets.   */
-	struct darray **buckets; /* Buckets.            */
+static void bucketsort(int *array, int n) {
+	int max;                  /* Maximum number.      */
+	int i, j;                 /* Loop indexes.        */
+	int range;                /* Bucket range.        */
+	struct minibucket *minib; /* Working mini-bucket. */
+	struct bucket **todo;     /* Todo buckets.        */
+	struct bucket **done;     /* Done buckets.        */
 
-	indexes = smalloc(NUM_BUCKETS*sizeof(int));
+	todo = smalloc(NUM_BUCKETS*sizeof(struct bucket *));
+	done = smalloc(NUM_BUCKETS*sizeof(struct bucket *));
 
-	/* Create buckets. */
-	buckets = smalloc(NUM_BUCKETS*sizeof(struct darray *));
-	for (i = 0; i < NUM_BUCKETS; i++)
-		buckets[i] = darray_create(n/NUM_BUCKETS);
-
-	max = INT_MIN;
-	_max = INT_MIN;
+	for (i = 0; i < NUM_BUCKETS; i++) {
+		done[i] = bucket_create();
+		todo[i] = bucket_create();
+	}
 
 	/* Find max number in the array. */
-	for (i = 0; i < n; i++)
-	{
+	max = INT_MIN;
+	for (i = 0; i < n; i++) {
 		/* Found. */
-		if (array[i] > _max)
-			_max = array[i];
+		if (array[i] > max)
+			max = array[i];
 	}
 
-	if (_max > max) {
-		max = _max;
-	}
-
+	/* Distribute numbers. */
 	range = max/NUM_BUCKETS;
-
-	/* Distribute numbers into buckets. */
-	for (i = 0; i < n; i++)
-	{
+	for (i = 0; i < n; i++) {
 		j = array[i]/range;
 		if (j >= NUM_BUCKETS)
 			j = NUM_BUCKETS - 1;
 
-		darray_append(buckets[j], array[i]);
+		bucket_insert(&todo[j], array[i]);
 	}
 
-	/* Sort Each bucket. */
-	for (i = 0; i < NUM_BUCKETS; i++)
-	{
-		if (darray_size(buckets[i]) > 0)
-			sort(buckets[i]);
+	/* Sort buckets. */
+	for (i = 0; i < NUM_BUCKETS; i++) {
+			minib = bucket_pop(todo[i]);
+			sort(minib->elements, minib->size);
+			bucket_push(done[i], minib);
 	}
 
-	/* Build indexes. */
-	indexes[0] = 0;
-	for (i = 1; i < NUM_BUCKETS; i++)
-		indexes[i] = indexes[i - 1] + darray_size(buckets[i]);
-
-	/* Rebuild array. */
-	for (i = 0; i < NUM_BUCKETS; i++)
-	{
-		k = indexes[i];
-
-		for (j = 0; j < darray_size(buckets[i]); j++)
-			array[k + j] = darray_get(buckets[i], j);
-	}
+	rebuild_array(done, array);
 
 	/* House keeping. */
-	for (i = 0; i < NUM_BUCKETS; i++)
-		darray_destroy(buckets[i]);
-	free(buckets);
-	free(indexes);
+	for (i = 0; i < NUM_BUCKETS; i++) {
+		bucket_destroy(todo[i]);
+		bucket_destroy(done[i]);
+	}
+	free(done);
+	free(todo);
 }
 
 void do_kernel(void)
@@ -101,10 +88,7 @@ void do_kernel(void)
 
 	init_task();
 
-	integer_sort(task, PROBLEM_SIZE);
-
-	for ( int i = 0; i < PROBLEM_SIZE; i++)
-		printf("%d ", task[i]);
+	bucketsort(task, PROBLEM_SIZE);
 
 	free(task);
 }

@@ -16,13 +16,13 @@ export CC = gcc
 export AR = ar
 
 # Tool chain configuration.
-export CFLAGS = -Wall -Wextra -Werror -O3
+export CFLAGS =  -Wall -Wextra -Werror -O3
 export CFLAGS += -I $(INCDIR)
 export ARFLAGS = -vq
 
 # Libraries.
 export LIB = libcapb
-export LIBS = $(LIBDIR)/$(LIB).a -lm -fopenmp 
+export LIBS = $(LIBDIR)/$(LIB).a -lm -fopenmp
 
 .PHONY: lib
 
@@ -30,12 +30,12 @@ export LIBS = $(LIBDIR)/$(LIB).a -lm -fopenmp
 all: lib
 	mkdir -p bin
 	cd $(SRCDIR) && $(MAKE) all
-	
+
 # Builds kernel library.
 lib:
 	mkdir -p lib
 	cd $(LIBSRCDIR) && $(MAKE) all
-	
+
 # Cleans compilation files.
 clean:
 	cd $(LIBSRCDIR) && $(MAKE) clean
