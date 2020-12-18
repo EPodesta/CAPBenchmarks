@@ -11,8 +11,8 @@
  * Parameters                                                                 *
  *============================================================================*/
 
-#define PROBLEM_SIZE                              8388608
-#define NUM_BUCKETS								  256
+#define PROBLEM_SIZE                              16384
+#define NUM_BUCKETS								  24
 
 /*=========================================================*
  * Functions     										   *
