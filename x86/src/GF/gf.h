@@ -19,7 +19,7 @@
 	#define PROBLEM_SEED 0
 
 	#define PROBLEM_MASKSIZE                           7
-	#define PROBLEM_IMGSIZE     (284 + PROBLEM_MASKSIZE - 1)
+	#define PROBLEM_IMGSIZE     (399 + PROBLEM_MASKSIZE - 1)
 	#define HALF                    (PROBLEM_MASKSIZE / 2)
 
 	#define PROBLEM_IMGSIZE2    (PROBLEM_IMGSIZE*PROBLEM_IMGSIZE)
