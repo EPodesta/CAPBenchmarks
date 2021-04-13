@@ -18,7 +18,7 @@ extern void friendly_numbers();
  * Parameters                                                                 *
  *============================================================================*/
 
-#define PROBLEM_SIZE                                 16383
+#define PROBLEM_SIZE                                 21504
 #define PROBLEM_START_NUM                            	 1
 #define PROBLEM_END_NUM      (PROBLEM_START + PROBLEM_SIZE)
 

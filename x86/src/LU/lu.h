@@ -11,8 +11,8 @@
  * Parameters                                                                 *
  *============================================================================*/
 
-#define PROBLEM_HEIGHT	220
-#define PROBLEM_WIDTH   220
+#define PROBLEM_HEIGHT	254
+#define PROBLEM_WIDTH   254
 
 /*
  * Matrix.
