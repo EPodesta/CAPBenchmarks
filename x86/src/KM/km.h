@@ -12,11 +12,34 @@
  * Parameters                                                                 *
  *============================================================================*/
 
+#ifdef PAGES32
 	#define PROBLEM_SEED                           0
 	#define PROBLEM_LNPOINTS                   (1400)
 	#define PROBLEM_NUM_CENTROIDS                512
 	#define DIMENSION_MAX                         16
 	#define PROBLEM_NUM_POINTS     (PROBLEM_LNPOINTS)
+#endif
+#ifdef PAGES42
+	#define PROBLEM_SEED                           0
+	#define PROBLEM_LNPOINTS                   (2020)
+	#define PROBLEM_NUM_CENTROIDS                512
+	#define DIMENSION_MAX                         16
+	#define PROBLEM_NUM_POINTS     (PROBLEM_LNPOINTS)
+#endif
+#ifdef PAGES48
+	#define PROBLEM_SEED                           0
+	#define PROBLEM_LNPOINTS                   (2304)
+	#define PROBLEM_NUM_CENTROIDS                512
+	#define DIMENSION_MAX                         16
+	#define PROBLEM_NUM_POINTS     (PROBLEM_LNPOINTS)
+#endif
+#ifdef PAGES64
+	#define PROBLEM_SEED                           0
+	#define PROBLEM_LNPOINTS                   (3264)
+	#define PROBLEM_NUM_CENTROIDS                512
+	#define DIMENSION_MAX                         16
+	#define PROBLEM_NUM_POINTS     (PROBLEM_LNPOINTS)
+#endif
 
 /*============================================================================*
  * Vector                                                                     *

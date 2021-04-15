@@ -11,12 +11,15 @@ export LIBDIR    = $(CURDIR)/lib
 export LIBSRCDIR = $(CURDIR)/libsrc
 export SRCDIR    = $(CURDIR)/src
 
+# Pages
+PAGES = -DPAGES32
+
 # Tool chain.
 export CC = gcc
 export AR = ar
 
 # Tool chain configuration.
-export CFLAGS =  -Wall -Wextra -Werror -O3
+export CFLAGS =  -Wall -Wextra -Werror -O3 $(PAGES)
 export CFLAGS += -I $(INCDIR)
 export ARFLAGS = -vq
 

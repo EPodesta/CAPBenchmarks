@@ -11,8 +11,22 @@
  * Parameters                                                                 *
  *============================================================================*/
 
+#ifdef PAGES32
 #define PROBLEM_SIZE                              16384
 #define NUM_BUCKETS				  				     16
+#endif
+#ifdef PAGES42
+#define PROBLEM_SIZE                              16384
+#define NUM_BUCKETS				  				     21
+#endif
+#ifdef PAGES48
+#define PROBLEM_SIZE                              16384
+#define NUM_BUCKETS				  				     24
+#endif
+#ifdef PAGES64
+#define PROBLEM_SIZE                              16384
+#define NUM_BUCKETS				  				     32
+#endif
 
 /*=========================================================*
  * Functions                        					   *

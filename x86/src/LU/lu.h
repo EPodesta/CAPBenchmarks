@@ -11,8 +11,22 @@
  * Parameters                                                                 *
  *============================================================================*/
 
+#ifdef PAGES32
 #define PROBLEM_HEIGHT	180
 #define PROBLEM_WIDTH   180
+#endif
+#ifdef PAGES42
+#define PROBLEM_HEIGHT	206
+#define PROBLEM_WIDTH   206
+#endif
+#ifdef PAGES48
+#define PROBLEM_HEIGHT	220
+#define PROBLEM_WIDTH   220
+#endif
+#ifdef PAGES64
+#define PROBLEM_HEIGHT	254
+#define PROBLEM_WIDTH   254
+#endif
 
 /*
  * Matrix.

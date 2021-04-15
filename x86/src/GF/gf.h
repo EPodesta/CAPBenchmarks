@@ -18,12 +18,38 @@
 
 	#define PROBLEM_SEED 0
 
+#ifdef PAGES32
 	#define PROBLEM_MASKSIZE                           7
 	#define PROBLEM_IMGSIZE     (348 + PROBLEM_MASKSIZE - 1)
 	#define HALF                    (PROBLEM_MASKSIZE / 2)
 
 	#define PROBLEM_IMGSIZE2    (PROBLEM_IMGSIZE*PROBLEM_IMGSIZE)
 	#define PROBLEM_MASKSIZE2 (PROBLEM_MASKSIZE*PROBLEM_MASKSIZE)
+#endif
+#ifdef PAGES42
+	#define PROBLEM_MASKSIZE                           7
+	#define PROBLEM_IMGSIZE     (399 + PROBLEM_MASKSIZE - 1)
+	#define HALF                    (PROBLEM_MASKSIZE / 2)
+
+	#define PROBLEM_IMGSIZE2    (PROBLEM_IMGSIZE*PROBLEM_IMGSIZE)
+	#define PROBLEM_MASKSIZE2 (PROBLEM_MASKSIZE*PROBLEM_MASKSIZE)
+#endif
+#ifdef PAGES48
+	#define PROBLEM_MASKSIZE                           7
+	#define PROBLEM_IMGSIZE     (430 + PROBLEM_MASKSIZE - 1)
+	#define HALF                    (PROBLEM_MASKSIZE / 2)
+
+	#define PROBLEM_IMGSIZE2    (PROBLEM_IMGSIZE*PROBLEM_IMGSIZE)
+	#define PROBLEM_MASKSIZE2 (PROBLEM_MASKSIZE*PROBLEM_MASKSIZE)
+#endif
+#ifdef PAGES64
+	#define PROBLEM_MASKSIZE                           7
+	#define PROBLEM_IMGSIZE     (498 + PROBLEM_MASKSIZE - 1)
+	#define HALF                    (PROBLEM_MASKSIZE / 2)
+
+	#define PROBLEM_IMGSIZE2    (PROBLEM_IMGSIZE*PROBLEM_IMGSIZE)
+	#define PROBLEM_MASKSIZE2 (PROBLEM_MASKSIZE*PROBLEM_MASKSIZE)
+#endif
 
 
 /*============================================================================*
