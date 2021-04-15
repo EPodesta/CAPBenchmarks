@@ -7,7 +7,7 @@ for commit in 03de5 aca12 9c021 a9826; do
 	git checkout "${commit}";
 	NUMBER_PAGES=$(git show "${commit}" | grep "pages setup" | awk '{print $1}')
 
-	cd ..; make clean-x86; make all-x86; cd-
+	cd ..; make clean-x86; make all-x86; cd -
 
 	for app in fn gf km is lu; do
 		bash ${HEATRACE_ROOT}/run.sh -- ./${app}.intel &>> pin_${NUMBER_PAGES}pages_overview.out
